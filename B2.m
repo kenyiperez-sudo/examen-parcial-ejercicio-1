@@ -1,70 +1,35 @@
-clc;
-clear;
-close all;
+clc; clear; close all;
 
-% Datos experimentales
 f = [100 120 145 170 200 235 270 310 355 405 ...
-    460 520 585 655 730 810 895 985 1080 1180 ...
-    1290 1410 1540 1680 1830 1990 2160 2340 2530 2730];
+     460 520 585 655 730 810 895 985 1080 1180 ...
+     1290 1410 1540 1680 1830 1990 2160 2340 2530 2730];
 
 Z = [152.3 149.1 146.8 144.9 142.0 139.5 137.9 136.1 134.8 133.6 ...
-    132.7 131.9 131.4 131.1 130.9 131.0 131.3 131.9 132.7 133.8 ...
-    135.2 136.9 138.9 141.1 143.5 146.1 149.0 152.2 155.6 159.2];
+     132.7 131.9 131.4 131.1 130.9 131.0 131.3 131.9 132.7 133.8 ...
+     135.2 136.9 138.9 141.1 143.5 146.1 149.0 152.2 155.6 159.2];
 
-% Número de datos
-n = length(f);
+fg = linspace(min(f),max(f),1000);
 
-% Normalización para evitar problemas numéricos
-x = (f - mean(f)) / std(f);
+sp = spline(f,Z);
+Zs = ppval(sp,fg);
 
-% Matriz de Vandermonde
-A = zeros(n,n);
+p5 = polyfit(f,Z,5);
+Zp5 = polyval(p5,fg);
 
-for i = 1:n
-    for j = 1:n
-        A(i,j) = x(i)^(j-1);
-    end
-end
+Z1000_spline = ppval(sp,1000);
+Z1000_p5 = polyval(p5,1000);
 
-% Coeficientes del polinomio
-coef = A\Z';
+fprintf('|Z|(1000) con spline = %.4f ohmios\n', Z1000_spline);
+fprintf('|Z|(1000) con polinomio grado 5 = %.4f ohmios\n', Z1000_p5);
 
-% Mostrar coeficientes
-disp('Coeficientes del polinomio desde a0 hasta a29:');
-disp(coef);
-
-% Mostrar polinomio
-fprintf('\nPolinomio interpolante:\n');
-fprintf('P(x) = ');
-
-for j = 1:n
-    if j == 1
-        fprintf('%.6e', coef(j));
-    else
-        fprintf(' + %.6e*x^%d', coef(j), j-1);
-    end
-end
-
-fprintf('\n\nDonde x = (f - mean(f)) / std(f)\n');
-
-% Evaluar el polinomio
-f_graf = linspace(min(f), max(f), 1000);
-x_graf = (f_graf - mean(f)) / std(f);
-
-Z_interp = zeros(size(x_graf));
-
-for j = 1:n
-    Z_interp = Z_interp + coef(j)*x_graf.^(j-1);
-end
-
-% Gráfica
 figure;
 plot(f,Z,'ko','MarkerFaceColor','k');
 hold on;
-plot(f_graf,Z_interp,'b','LineWidth',1.5);
-
+plot(fg,Zs,'b','LineWidth',2);
+plot(fg,Zp5,'r--','LineWidth',2);
+plot(1000,Z1000_spline,'mo','MarkerFaceColor','m');
 grid on;
 xlabel('Frecuencia f (Hz)');
-ylabel('|Z| (Ohm)');
-title('Interpolación polinómica por método matricial');
-legend('Datos experimentales','Polinomio interpolante');
+ylabel('|Z| (\Omega)');
+title('Comparación spline cúbico y polinomio grado 5');
+legend('Datos','Spline cúbico','Polinomio grado 5','|Z|(1000)');
